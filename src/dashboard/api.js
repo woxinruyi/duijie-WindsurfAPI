@@ -36,13 +36,18 @@ function json(res, status, body) {
 }
 
 function checkAuth(req) {
-  const pw = req.headers['x-dashboard-password'] || '';
-  // If dashboard password is set, use it
+  // Header is preferred (set by fetch). EventSource can't set custom headers,
+  // so /logs/stream etc. also accept ?pwd=... as fallback.
+  let pw = req.headers['x-dashboard-password'] || '';
+  if (!pw) {
+    try {
+      const qs = new URL(req.url, 'http://x').searchParams;
+      pw = qs.get('pwd') || '';
+    } catch {}
+  }
   if (config.dashboardPassword) return pw === config.dashboardPassword;
-  // Otherwise fall back to API key (if set)
   if (config.apiKey) return pw === config.apiKey;
-  // No password and no API key = open access
-  return true;
+  return true;  // No password and no API key = open access
 }
 
 /**

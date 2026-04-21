@@ -2647,7 +2647,10 @@ const App = {
   loadLogs() {
     this.logEntries = [];
     document.getElementById('log-container').innerHTML = '';
-    this.sseConn = new EventSource('/dashboard/api/logs/stream');
+    // EventSource can't set custom headers, so pass the dashboard password
+    // via query string (same secret, only transmitted over same-origin).
+    const qs = this.password ? `?pwd=${encodeURIComponent(this.password)}` : '';
+    this.sseConn = new EventSource('/dashboard/api/logs/stream' + qs);
     this.sseConn.onmessage = (e) => {
       try {
         const entry = JSON.parse(e.data);
